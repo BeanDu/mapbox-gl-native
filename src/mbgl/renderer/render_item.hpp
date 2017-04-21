@@ -8,11 +8,11 @@
 namespace mbgl {
 
 class RenderLayer;
+class RenderSource;
 class RenderTile;
 class Bucket;
 
 namespace style {
-class Source;
 } // namespace style
 
 class RenderItem {
@@ -31,7 +31,7 @@ public:
 class RenderData {
 public:
     Color backgroundColor;
-    std::unordered_set<style::Source*> sources;
+    std::unordered_set<RenderSource*> sources;
     std::vector<RenderItem> order;
 };
 
