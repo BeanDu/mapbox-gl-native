@@ -17,8 +17,6 @@ workflows:
             #!/bin/bash
             set -eu -o pipefail
             brew install cmake
-            brew tap mapbox/homebrew-ios-sim-3
-            brew install mapbox/homebrew-ios-sim-3/ios-sim
         - is_debug: 'yes'
     - script:
         title: Generate Workspace
@@ -64,14 +62,9 @@ workflows:
             #!/bin/bash
             set -eu -o pipefail
             brew install cmake
+            sudo easy_install pip
+            sudo pip install awscli
         - is_debug: 'yes'
-    - script:
-        title: Configure AWS-CLI
-        inputs:
-        - content: |-
-            #!/bin/bash
-            apt-get install -y python-pip python-dev build-essential
-            pip install awscli
     - script:
         title: Build package
         inputs:

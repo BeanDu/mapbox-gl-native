@@ -2,6 +2,7 @@
 
 #include <mbgl/util/color.hpp>
 #include <mbgl/util/range.hpp>
+#include <mbgl/style/position.hpp>
 
 #include <array>
 #include <vector>
@@ -47,6 +48,17 @@ public:
 };
 
 template <>
+struct Interpolator<style::Position> {
+public:
+    style::Position operator()(const style::Position& a, const style::Position& b, const double t) {
+        auto pos = style::Position();
+        auto interpolated = interpolate(a.getCartesian(), b.getCartesian(), t);
+        pos.setCartesian(interpolated);
+        return { pos };
+    }
+};
+
+template <>
 struct Interpolator<Color> {
 public:
     Color operator()(const Color& a, const Color& b, const double t) {
@@ -83,7 +95,11 @@ struct Interpolator<std::vector<T>>
     : Uninterpolated {};
 
 template <class T>
-constexpr bool Interpolatable = !std::is_base_of<Uninterpolated, Interpolator<T>>::value;
+struct Interpolatable
+    : std::conditional_t<
+      !std::is_base_of<Uninterpolated, Interpolator<T>>::value,
+      std::true_type,
+      std::false_type> {};
 
 } // namespace util
 } // namespace mbgl

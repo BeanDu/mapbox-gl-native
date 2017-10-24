@@ -322,11 +322,11 @@ public class PropertyFactory {
   /**
    * Stroke thickness.
    *
-   * @param <Z> the zoom parameter type
-   * @param function a wrapper {@link CameraFunction} for Float
+   * @param <T> the function input type
+   * @param function a wrapper function for Float
    * @return property wrapper around a Float function
    */
-  public static <Z extends Number> PropertyValue<CameraFunction<Z, Float>> lineWidth(CameraFunction<Z, Float> function) {
+  public static <T> PropertyValue<Function<T, Float>> lineWidth(Function<T, Float> function) {
     return new PaintPropertyValue<>("line-width", function);
   }
 
@@ -953,6 +953,28 @@ public class PropertyFactory {
   }
 
   /**
+   * Orientation of circle when map is pitched.
+   *
+   * @param value a String value
+   * @return property wrapper around String
+   */
+  public static PropertyValue<String> circlePitchAlignment(@Property.CIRCLE_PITCH_ALIGNMENT String value) {
+    return new PaintPropertyValue<>("circle-pitch-alignment", value);
+  }
+
+
+  /**
+   * Orientation of circle when map is pitched.
+   *
+   * @param <Z> the zoom parameter type
+   * @param function a wrapper {@link CameraFunction} for String
+   * @return property wrapper around a String function
+   */
+  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> circlePitchAlignment(CameraFunction<Z, String> function) {
+    return new PaintPropertyValue<>("circle-pitch-alignment", function);
+  }
+
+  /**
    * The width of the circle's stroke. Strokes are placed outside of the {@link PropertyFactory#circleRadius}.
    *
    * @param value a Float value
@@ -1026,6 +1048,170 @@ public class PropertyFactory {
    */
   public static <T> PropertyValue<Function<T, Float>> circleStrokeOpacity(Function<T, Float> function) {
     return new PaintPropertyValue<>("circle-stroke-opacity", function);
+  }
+
+  /**
+   * The opacity of the entire fill extrusion layer. This is rendered on a per-layer, not per-feature, basis, and data-driven styling is not available.
+   *
+   * @param value a Float value
+   * @return property wrapper around Float
+   */
+  public static PropertyValue<Float> fillExtrusionOpacity(Float value) {
+    return new PaintPropertyValue<>("fill-extrusion-opacity", value);
+  }
+
+
+  /**
+   * The opacity of the entire fill extrusion layer. This is rendered on a per-layer, not per-feature, basis, and data-driven styling is not available.
+   *
+   * @param <Z> the zoom parameter type
+   * @param function a wrapper {@link CameraFunction} for Float
+   * @return property wrapper around a Float function
+   */
+  public static <Z extends Number> PropertyValue<CameraFunction<Z, Float>> fillExtrusionOpacity(CameraFunction<Z, Float> function) {
+    return new PaintPropertyValue<>("fill-extrusion-opacity", function);
+  }
+
+  /**
+   * The base color of the extruded fill. The extrusion's surfaces will be shaded differently based on this color in combination with the root `light` settings. If this color is specified as `rgba` with an alpha component, the alpha component will be ignored; use {@link PropertyFactory#fillExtrusionOpacity} to set layer opacity.
+   *
+   * @param value a int color value
+   * @return property wrapper around String color
+   */
+  public static PropertyValue<String> fillExtrusionColor(@ColorInt int value) {
+    return new PaintPropertyValue<>("fill-extrusion-color", colorToRgbaString(value));
+  }
+
+  /**
+   * The base color of the extruded fill. The extrusion's surfaces will be shaded differently based on this color in combination with the root `light` settings. If this color is specified as `rgba` with an alpha component, the alpha component will be ignored; use {@link PropertyFactory#fillExtrusionOpacity} to set layer opacity.
+   *
+   * @param value a String value
+   * @return property wrapper around String
+   */
+  public static PropertyValue<String> fillExtrusionColor(String value) {
+    return new PaintPropertyValue<>("fill-extrusion-color", value);
+  }
+
+
+  /**
+   * The base color of the extruded fill. The extrusion's surfaces will be shaded differently based on this color in combination with the root `light` settings. If this color is specified as `rgba` with an alpha component, the alpha component will be ignored; use {@link PropertyFactory#fillExtrusionOpacity} to set layer opacity.
+   *
+   * @param <T> the function input type
+   * @param function a wrapper function for String
+   * @return property wrapper around a String function
+   */
+  public static <T> PropertyValue<Function<T, String>> fillExtrusionColor(Function<T, String> function) {
+    return new PaintPropertyValue<>("fill-extrusion-color", function);
+  }
+
+  /**
+   * The geometry's offset. Values are [x, y] where negatives indicate left and up (on the flat plane), respectively.
+   *
+   * @param value a Float[] value
+   * @return property wrapper around Float[]
+   */
+  public static PropertyValue<Float[]> fillExtrusionTranslate(Float[] value) {
+    return new PaintPropertyValue<>("fill-extrusion-translate", value);
+  }
+
+
+  /**
+   * The geometry's offset. Values are [x, y] where negatives indicate left and up (on the flat plane), respectively.
+   *
+   * @param <Z> the zoom parameter type
+   * @param function a wrapper {@link CameraFunction} for Float[]
+   * @return property wrapper around a Float[] function
+   */
+  public static <Z extends Number> PropertyValue<CameraFunction<Z, Float[]>> fillExtrusionTranslate(CameraFunction<Z, Float[]> function) {
+    return new PaintPropertyValue<>("fill-extrusion-translate", function);
+  }
+
+  /**
+   * Controls the translation reference point.
+   *
+   * @param value a String value
+   * @return property wrapper around String
+   */
+  public static PropertyValue<String> fillExtrusionTranslateAnchor(@Property.FILL_EXTRUSION_TRANSLATE_ANCHOR String value) {
+    return new PaintPropertyValue<>("fill-extrusion-translate-anchor", value);
+  }
+
+
+  /**
+   * Controls the translation reference point.
+   *
+   * @param <Z> the zoom parameter type
+   * @param function a wrapper {@link CameraFunction} for String
+   * @return property wrapper around a String function
+   */
+  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> fillExtrusionTranslateAnchor(CameraFunction<Z, String> function) {
+    return new PaintPropertyValue<>("fill-extrusion-translate-anchor", function);
+  }
+
+  /**
+   * Name of image in sprite to use for drawing images on extruded fills. For seamless patterns, image width and height must be a factor of two (2, 4, 8, ..., 512).
+   *
+   * @param value a String value
+   * @return property wrapper around String
+   */
+  public static PropertyValue<String> fillExtrusionPattern(String value) {
+    return new PaintPropertyValue<>("fill-extrusion-pattern", value);
+  }
+
+
+  /**
+   * Name of image in sprite to use for drawing images on extruded fills. For seamless patterns, image width and height must be a factor of two (2, 4, 8, ..., 512).
+   *
+   * @param <Z> the zoom parameter type
+   * @param function a wrapper {@link CameraFunction} for String
+   * @return property wrapper around a String function
+   */
+  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> fillExtrusionPattern(CameraFunction<Z, String> function) {
+    return new PaintPropertyValue<>("fill-extrusion-pattern", function);
+  }
+
+  /**
+   * The height with which to extrude this layer.
+   *
+   * @param value a Float value
+   * @return property wrapper around Float
+   */
+  public static PropertyValue<Float> fillExtrusionHeight(Float value) {
+    return new PaintPropertyValue<>("fill-extrusion-height", value);
+  }
+
+
+  /**
+   * The height with which to extrude this layer.
+   *
+   * @param <T> the function input type
+   * @param function a wrapper function for Float
+   * @return property wrapper around a Float function
+   */
+  public static <T> PropertyValue<Function<T, Float>> fillExtrusionHeight(Function<T, Float> function) {
+    return new PaintPropertyValue<>("fill-extrusion-height", function);
+  }
+
+  /**
+   * The height with which to extrude the base of this layer. Must be less than or equal to {@link PropertyFactory#fillExtrusionHeight}.
+   *
+   * @param value a Float value
+   * @return property wrapper around Float
+   */
+  public static PropertyValue<Float> fillExtrusionBase(Float value) {
+    return new PaintPropertyValue<>("fill-extrusion-base", value);
+  }
+
+
+  /**
+   * The height with which to extrude the base of this layer. Must be less than or equal to {@link PropertyFactory#fillExtrusionHeight}.
+   *
+   * @param <T> the function input type
+   * @param function a wrapper function for Float
+   * @return property wrapper around a Float function
+   */
+  public static <T> PropertyValue<Function<T, Float>> fillExtrusionBase(Function<T, Float> function) {
+    return new PaintPropertyValue<>("fill-extrusion-base", function);
   }
 
   /**
@@ -1296,11 +1482,11 @@ public class PropertyFactory {
   /**
    * The display of lines when joining.
    *
-   * @param <Z> the zoom parameter type
-   * @param function a wrapper {@link CameraFunction} for String
+   * @param <T> the function input type
+   * @param function a wrapper function for String
    * @return property wrapper around a String function
    */
-  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> lineJoin(CameraFunction<Z, String> function) {
+  public static <T> PropertyValue<Function<T, String>> lineJoin(Function<T, String> function) {
     return new LayoutPropertyValue<>("line-join", function);
   }
 
@@ -1512,7 +1698,7 @@ public class PropertyFactory {
   }
 
   /**
-   * Scale factor for icon. 1 is original size, 3 triples the size.
+   * Scales the original size of the icon by the provided factor. The new pixel size of the image will be the original pixel size multiplied by {@link PropertyFactory#iconSize}. 1 is the original size; 3 triples the size of the image.
    *
    * @param value a Float value
    * @return property wrapper around Float
@@ -1524,7 +1710,7 @@ public class PropertyFactory {
 
 
   /**
-   * Scale factor for icon. 1 is original size, 3 triples the size.
+   * Scales the original size of the icon by the provided factor. The new pixel size of the image will be the original pixel size multiplied by {@link PropertyFactory#iconSize}. 1 is the original size; 3 triples the size of the image.
    *
    * @param <T> the function input type
    * @param function a wrapper function for Float
@@ -1696,6 +1882,52 @@ public class PropertyFactory {
   }
 
   /**
+   * Part of the icon placed closest to the anchor.
+   *
+   * @param value a String value
+   * @return property wrapper around String
+   */
+  public static PropertyValue<String> iconAnchor(@Property.ICON_ANCHOR String value) {
+    return new LayoutPropertyValue<>("icon-anchor", value);
+  }
+
+
+
+  /**
+   * Part of the icon placed closest to the anchor.
+   *
+   * @param <T> the function input type
+   * @param function a wrapper function for String
+   * @return property wrapper around a String function
+   */
+  public static <T> PropertyValue<Function<T, String>> iconAnchor(Function<T, String> function) {
+    return new LayoutPropertyValue<>("icon-anchor", function);
+  }
+
+  /**
+   * Orientation of icon when map is pitched.
+   *
+   * @param value a String value
+   * @return property wrapper around String
+   */
+  public static PropertyValue<String> iconPitchAlignment(@Property.ICON_PITCH_ALIGNMENT String value) {
+    return new LayoutPropertyValue<>("icon-pitch-alignment", value);
+  }
+
+
+
+  /**
+   * Orientation of icon when map is pitched.
+   *
+   * @param <Z> the zoom parameter type
+   * @param function a wrapper {@link CameraFunction} for String
+   * @return property wrapper around a String function
+   */
+  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> iconPitchAlignment(CameraFunction<Z, String> function) {
+    return new LayoutPropertyValue<>("icon-pitch-alignment", function);
+  }
+
+  /**
    * Orientation of text when map is pitched.
    *
    * @param value a String value
@@ -1825,11 +2057,11 @@ public class PropertyFactory {
   /**
    * The maximum line width for text wrapping.
    *
-   * @param <Z> the zoom parameter type
-   * @param function a wrapper {@link CameraFunction} for Float
+   * @param <T> the function input type
+   * @param function a wrapper function for Float
    * @return property wrapper around a Float function
    */
-  public static <Z extends Number> PropertyValue<CameraFunction<Z, Float>> textMaxWidth(CameraFunction<Z, Float> function) {
+  public static <T> PropertyValue<Function<T, Float>> textMaxWidth(Function<T, Float> function) {
     return new LayoutPropertyValue<>("text-max-width", function);
   }
 
@@ -1871,11 +2103,11 @@ public class PropertyFactory {
   /**
    * Text tracking amount.
    *
-   * @param <Z> the zoom parameter type
-   * @param function a wrapper {@link CameraFunction} for Float
+   * @param <T> the function input type
+   * @param function a wrapper function for Float
    * @return property wrapper around a Float function
    */
-  public static <Z extends Number> PropertyValue<CameraFunction<Z, Float>> textLetterSpacing(CameraFunction<Z, Float> function) {
+  public static <T> PropertyValue<Function<T, Float>> textLetterSpacing(Function<T, Float> function) {
     return new LayoutPropertyValue<>("text-letter-spacing", function);
   }
 
@@ -1894,11 +2126,11 @@ public class PropertyFactory {
   /**
    * Text justification options.
    *
-   * @param <Z> the zoom parameter type
-   * @param function a wrapper {@link CameraFunction} for String
+   * @param <T> the function input type
+   * @param function a wrapper function for String
    * @return property wrapper around a String function
    */
-  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> textJustify(CameraFunction<Z, String> function) {
+  public static <T> PropertyValue<Function<T, String>> textJustify(Function<T, String> function) {
     return new LayoutPropertyValue<>("text-justify", function);
   }
 
@@ -1917,11 +2149,11 @@ public class PropertyFactory {
   /**
    * Part of the text placed closest to the anchor.
    *
-   * @param <Z> the zoom parameter type
-   * @param function a wrapper {@link CameraFunction} for String
+   * @param <T> the function input type
+   * @param function a wrapper function for String
    * @return property wrapper around a String function
    */
-  public static <Z extends Number> PropertyValue<CameraFunction<Z, String>> textAnchor(CameraFunction<Z, String> function) {
+  public static <T> PropertyValue<Function<T, String>> textAnchor(Function<T, String> function) {
     return new LayoutPropertyValue<>("text-anchor", function);
   }
 

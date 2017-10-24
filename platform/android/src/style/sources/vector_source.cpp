@@ -1,5 +1,7 @@
 #include "vector_source.hpp"
 
+#include <mbgl/renderer/query.hpp>
+
 // Java -> C++ conversion
 #include "../android_conversion.hpp"
 #include "../conversion/filter.hpp"
@@ -28,11 +30,16 @@ namespace android {
         ) {
     }
 
-    VectorSource::VectorSource(mbgl::Map& map, mbgl::style::VectorSource& coreSource)
-        : Source(map, coreSource) {
+    VectorSource::VectorSource(mbgl::style::VectorSource& coreSource)
+        : Source(coreSource) {
     }
 
     VectorSource::~VectorSource() = default;
+
+    jni::String VectorSource::getURL(jni::JNIEnv& env) {
+        optional<std::string> url = source.as<mbgl::style::VectorSource>()->VectorSource::getURL();
+        return url ? jni::Make<jni::String>(env, *url) : jni::String();
+    }
 
     jni::Array<jni::Object<geojson::Feature>> VectorSource::querySourceFeatures(jni::JNIEnv& env,
                                                                              jni::Array<jni::String> jSourceLayerIds,
@@ -40,9 +47,10 @@ namespace android {
         using namespace mbgl::android::conversion;
         using namespace mbgl::android::geojson;
 
-        mbgl::optional<std::vector<std::string>> sourceLayerIds = { toVector(env, jSourceLayerIds) };
-        auto filter = toFilter(env, jfilter);
-        auto features = source.querySourceFeatures({ sourceLayerIds,  filter });
+        std::vector<mbgl::Feature> features;
+        if (rendererFrontend) {
+            features = rendererFrontend->querySourceFeatures(source.getID(), { toVector(env, jSourceLayerIds), toFilter(env, jfilter) });
+        }
         return *convert<jni::Array<jni::Object<Feature>>, std::vector<mbgl::Feature>>(env, features);
     }
 
@@ -65,7 +73,8 @@ namespace android {
             std::make_unique<VectorSource, JNIEnv&, jni::String, jni::Object<>>,
             "initialize",
             "finalize",
-            METHOD(&VectorSource::querySourceFeatures, "querySourceFeatures")
+            METHOD(&VectorSource::querySourceFeatures, "querySourceFeatures"),
+            METHOD(&VectorSource::getURL, "nativeGetUrl")
         );
     }
 

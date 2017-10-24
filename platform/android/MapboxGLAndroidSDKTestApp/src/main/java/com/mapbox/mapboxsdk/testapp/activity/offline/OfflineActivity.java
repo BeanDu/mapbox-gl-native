@@ -12,7 +12,6 @@ import android.widget.Toast;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.constants.MapboxConstants;
 import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -75,8 +74,7 @@ public class OfflineActivity extends AppCompatActivity
     // state of your app. This will override any checks performed via the ConnectivityManager.
     // Mapbox.getInstance().setConnected(false);
     Boolean connected = Mapbox.isConnected();
-    Timber.d(String.format(MapboxConstants.MAPBOX_LOCALE,
-      "Mapbox is connected: %b", connected));
+    Timber.d("Mapbox is connected: %s", connected);
 
     // Set up map
     mapView = (MapView) findViewById(R.id.mapView);
@@ -207,7 +205,7 @@ public class OfflineActivity extends AppCompatActivity
 
       @Override
       public void onError(String error) {
-        Timber.e("Error: " + error);
+        Timber.e("Error: %s" , error);
       }
     });
   }
@@ -223,7 +221,7 @@ public class OfflineActivity extends AppCompatActivity
     }
 
     // Start progress bar
-    Timber.d("Download started: " + regionName);
+    Timber.d("Download started: %s", regionName);
     startProgress();
 
     // Definition
@@ -241,14 +239,14 @@ public class OfflineActivity extends AppCompatActivity
     offlineManager.createOfflineRegion(definition, metadata, new OfflineManager.CreateOfflineRegionCallback() {
       @Override
       public void onCreate(OfflineRegion offlineRegion) {
-        Timber.d("Offline region created: " + regionName);
+        Timber.d("Offline region created: %s" , regionName);
         OfflineActivity.this.offlineRegion = offlineRegion;
         launchDownload();
       }
 
       @Override
       public void onError(String error) {
-        Timber.e("Error: " + error);
+        Timber.e("Error: %s", error);
       }
     });
   }
@@ -274,22 +272,20 @@ public class OfflineActivity extends AppCompatActivity
         }
 
         // Debug
-        Timber.d(String.format("%s/%s resources; %s bytes downloaded.",
+        Timber.d("%s/%s resources; %s bytes downloaded.",
           String.valueOf(status.getCompletedResourceCount()),
           String.valueOf(status.getRequiredResourceCount()),
-          String.valueOf(status.getCompletedResourceSize())));
+          String.valueOf(status.getCompletedResourceSize()));
       }
 
       @Override
       public void onError(OfflineRegionError error) {
-        Timber.e("onError reason: " + error.getReason());
-        Timber.e("onError message: " + error.getMessage());
-        offlineRegion.setObserver(null);
+        Timber.e("onError: %s, %s", error.getReason(), error.getMessage());
       }
 
       @Override
       public void mapboxTileCountLimitExceeded(long limit) {
-        Timber.e("Mapbox tile count limit exceeded: " + limit);
+        Timber.e("Mapbox tile count limit exceeded: %s", limit);
       }
     });
 

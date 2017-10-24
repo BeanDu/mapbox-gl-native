@@ -1,5 +1,6 @@
 package com.mapbox.mapboxsdk.testapp.activity.camera;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -24,10 +25,14 @@ import com.mapbox.mapboxsdk.testapp.R;
 
 import timber.log.Timber;
 
+/**
+ * Test activity showcasing how to listen to camera change events.
+ */
 public class CameraPositionActivity extends AppCompatActivity implements OnMapReadyCallback {
 
   private MapView mapView;
   private MapboxMap mapboxMap;
+  private FloatingActionButton fab;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -40,20 +45,49 @@ public class CameraPositionActivity extends AppCompatActivity implements OnMapRe
   }
 
   @Override
-  public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-    this.mapboxMap = mapboxMap;
+  public void onMapReady(@NonNull final MapboxMap map) {
+    mapboxMap = map;
 
-    mapboxMap.setOnCameraChangeListener(new MapboxMap.OnCameraChangeListener() {
+    mapboxMap.setOnCameraIdleListener(new MapboxMap.OnCameraIdleListener() {
       @Override
-      public void onCameraChange(CameraPosition position) {
-        Timber.w("OnCameraChange: " + position);
+      public void onCameraIdle() {
+        Timber.e("OnCameraIdle");
+        fab.setColorFilter(ContextCompat.getColor(CameraPositionActivity.this, android.R.color.holo_green_dark));
+      }
+    });
+
+    mapboxMap.setOnCameraMoveCancelListener(new MapboxMap.OnCameraMoveCanceledListener() {
+      @Override
+      public void onCameraMoveCanceled() {
+        Timber.e("OnCameraMoveCanceled");
+      }
+    });
+
+    mapboxMap.setOnCameraMoveListener(new MapboxMap.OnCameraMoveListener() {
+      @Override
+      public void onCameraMove() {
+        Timber.e("OnCameraMove");
+        fab.setColorFilter(ContextCompat.getColor(CameraPositionActivity.this, android.R.color.holo_orange_dark));
+      }
+    });
+
+    mapboxMap.setOnCameraMoveStartedListener(new MapboxMap.OnCameraMoveStartedListener() {
+
+      private final String[] REASONS = {"REASON_API_GESTURE", "REASON_DEVELOPER_ANIMATION", "REASON_API_ANIMATION"};
+
+      @Override
+      public void onCameraMoveStarted(int reason) {
+        // reason ranges from 1 <-> 3
+        fab.setColorFilter(ContextCompat.getColor(CameraPositionActivity.this, android.R.color.holo_red_dark));
+        Timber.e("OnCameraMoveStarted: %s", REASONS[reason - 1]);
       }
     });
 
     // add a listener to FAB
-    FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+    fab = (FloatingActionButton) findViewById(R.id.fab);
     fab.setColorFilter(ContextCompat.getColor(CameraPositionActivity.this, R.color.primary));
     fab.setOnClickListener(new View.OnClickListener() {
+      @SuppressLint("InflateParams")
       @Override
       public void onClick(View view) {
         Context context = view.getContext();

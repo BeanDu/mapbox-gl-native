@@ -22,11 +22,16 @@ namespace android {
         ) {
     }
 
-    RasterSource::RasterSource(mbgl::Map& map, mbgl::style::RasterSource& coreSource)
-        : Source(map, coreSource) {
+    RasterSource::RasterSource(mbgl::style::RasterSource& coreSource)
+        : Source(coreSource) {
     }
 
     RasterSource::~RasterSource() = default;
+
+    jni::String RasterSource::getURL(jni::JNIEnv& env) {
+        optional<std::string> url = source.as<mbgl::style::RasterSource>()->RasterSource::getURL();
+        return url ? jni::Make<jni::String>(env, *url) : jni::String();
+    }
 
     jni::Class<RasterSource> RasterSource::javaClass;
 
@@ -46,7 +51,8 @@ namespace android {
             env, RasterSource::javaClass, "nativePtr",
             std::make_unique<RasterSource, JNIEnv&, jni::String, jni::Object<>, jni::jint>,
             "initialize",
-            "finalize"
+            "finalize",
+            METHOD(&RasterSource::getURL, "nativeGetUrl")
         );
     }
 

@@ -161,7 +161,8 @@ static const CGFloat MGLFeetPerMeter = 3.28084;
 }
 
 - (CGFloat)actualWidth {
-    return self.row.distance / [self unitsPerPoint];
+    CGFloat width = self.row.distance / [self unitsPerPoint];
+    return !isnan(width) ? width : 0;
 }
 
 - (CGFloat)maximumWidth {
@@ -187,9 +188,9 @@ static const CGFloat MGLFeetPerMeter = 3.28084;
 
 - (MGLRow)preferredRow {
     CLLocationDistance maximumDistance = [self maximumWidth] * [self unitsPerPoint];
-    MGLRow row;
     
     BOOL useMetric = [self usesMetricSystem];
+    MGLRow row = useMetric ? MGLMetricTable[0] : MGLImperialTable[0];
     NSUInteger count = useMetric
     ? sizeof(MGLMetricTable) / sizeof(MGLMetricTable[0])
     : sizeof(MGLImperialTable) / sizeof(MGLImperialTable[0]);
@@ -218,6 +219,12 @@ static const CGFloat MGLFeetPerMeter = 3.28084;
     [self updateVisibility];
     
     self.row = [self preferredRow];
+    
+    CGSize size = self.intrinsicContentSize;
+    self.frame = CGRectMake(CGRectGetMinX(self.frame),
+                            CGRectGetMinY(self.frame),
+                            size.width,
+                            size.height);
     
     [self invalidateIntrinsicContentSize];
     [self setNeedsLayout];

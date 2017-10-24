@@ -76,6 +76,8 @@ gestures.
 
 For more information about user interface design, consult Apple’s
 [_iOS Human Interface Guidelines_](https://developer.apple.com/ios/human-interface-guidelines/).
+To learn more about designing maps for mobile devices, see [Nathaniel Slaughter's blog post](https://www.mapbox.com/blog/designing-maps-for-mobile-devices/) on
+the subject.
 
 ## Applying your style
 
@@ -107,7 +109,6 @@ the following terms for concepts defined in the style specification:
 
 In the style specification | In the SDK
 ---------------------------|---------
-class                      | style class
 filter                     | predicate
 function type              | interpolation mode
 id                         | identifier
@@ -128,8 +129,9 @@ In style JSON | In the SDK
 `geojson`     | `MGLShapeSource`
 `raster`      | `MGLRasterSource`
 `vector`      | `MGLVectorSource`
+`image`       | `MGLImageSource`
 
-`canvas`, `image`, and `video` sources are not supported.
+`canvas` and `video` sources are not supported.
 
 ### Tile sources
 
@@ -170,6 +172,12 @@ To create a shape source from local GeoJSON data, first
 [convert the GeoJSON data into a shape](working-with-geojson-data.html#converting-geojson-data-into-shape-objects),
 then use the `-[MGLShapeSource initWithIdentifier:shape:options:]` method.
 
+### Image sources
+
+Image sources accept a non-axis aligned quadrilateral as their geographic coordinates.
+These coordinates, in `MGLCoordinateQuad`, are described in counterclockwise order, 
+in contrast to the clockwise order defined in the style specification. 
+
 ## Configuring the map content’s appearance
 
 Each layer defined by the style JSON file is represented at runtime by a style
@@ -181,6 +189,7 @@ In style JSON | In the SDK
 `background` | `MGLBackgroundStyleLayer`
 `circle` | `MGLCircleStyleLayer`
 `fill` | `MGLFillStyleLayer`
+`fill-extrusion` | `MGLFillExtrusionStyleLayer`
 `line` | `MGLLineStyleLayer`
 `raster` | `MGLRasterStyleLayer`
 `symbol` | `MGLSymbolStyleLayer`
@@ -205,6 +214,13 @@ In style JSON | In Objective-C | In Swift
 `fill-antialias` | `MGLFillStyleLayer.fillAntialiased` | `MGLFillStyleLayer.isFillAntialiased`
 `fill-translate` | `MGLFillStyleLayer.fillTranslation` | `MGLFillStyleLayer.fillTranslation`
 `fill-translate-anchor` | `MGLFillStyleLayer.fillTranslationAnchor` | `MGLFillStyleLayer.fillTranslationAnchor`
+
+### Fill extrusion style layers
+
+In style JSON | In Objective-C | In Swift
+--------------|----------------|---------
+`fill-extrusion-translate` | `MGLFillExtrusionStyleLayer.fillExtrusionTranslation` | `MGLFillExtrusionStyleLayer.fillExtrusionTranslation`
+`fill-extrusion-translate-anchor` | `MGLFillExtrusionStyleLayer.fillExtrusionTranslationAnchor` | `MGLFillExtrusionStyleLayer.fillExtrusionTranslationAnchor`
 
 ### Line style layers
 

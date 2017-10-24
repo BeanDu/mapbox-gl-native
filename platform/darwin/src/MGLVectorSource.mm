@@ -3,10 +3,14 @@
 #import "MGLFeature_Private.h"
 #import "MGLSource_Private.h"
 #import "MGLTileSource_Private.h"
+#import "MGLStyle_Private.h"
+#import "MGLMapView_Private.h"
 #import "NSPredicate+MGLAdditions.h"
 #import "NSURL+MGLAdditions.h"
 
+#include <mbgl/map/map.hpp>
 #include <mbgl/style/sources/vector_source.hpp>
+#include <mbgl/renderer/renderer.hpp>
 
 @interface MGLVectorSource ()
 
@@ -59,7 +63,10 @@
         optionalFilter = predicate.mgl_filter;
     }
     
-    std::vector<mbgl::Feature> features = self.rawSource->querySourceFeatures({ optionalSourceLayerIDs, optionalFilter });
+    std::vector<mbgl::Feature> features;
+    if (self.mapView) {
+        features = self.mapView.renderer->querySourceFeatures(self.rawSource->getID(), { optionalSourceLayerIDs, optionalFilter });
+    }
     return MGLFeaturesFromMBGLFeatures(features);
 }
 

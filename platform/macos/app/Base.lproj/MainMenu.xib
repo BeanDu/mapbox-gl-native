@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1217" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="12121" systemVersion="16E195" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11762"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="12121"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -126,6 +126,12 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="revertDocumentToSaved:" target="-1" id="iJ3-Pv-kwq"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Export Image…" id="vjX-0E-kLO">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="takeSnapshot:" target="-1" id="H06-sU-n4U"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="aJh-i4-bef"/>
@@ -395,6 +401,16 @@
                                     <action selector="showStyle:" target="-1" id="NTT-Y1-EqU"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Traffic Day" tag="7" keyEquivalent="7" id="m9S-sv-Dch">
+                                <connections>
+                                    <action selector="showStyle:" target="-1" id="lXM-BW-dDw"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Traffic Night" tag="8" keyEquivalent="8" id="yVS-VL-Xsy">
+                                <connections>
+                                    <action selector="showStyle:" target="-1" id="eAD-br-oBB"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Custom Style…" id="L0h-86-2cU">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -544,6 +560,12 @@
                                     <action selector="insertCustomStyleLayer:" target="-1" id="LE5-lz-kx3"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Add Animated Image Source" id="tjA-fT-GbA">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="addAnimatedImageSource:" target="-1" id="TuN-Pa-hTG"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Show All Annnotations" keyEquivalent="A" id="yMj-uM-8SN">
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
@@ -638,12 +660,12 @@ CA
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="109" y="131" width="350" height="84"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
             <view key="contentView" id="eA4-n3-qPe">
                 <rect key="frame" x="0.0" y="0.0" width="350" height="84"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0IK-AW-Gg3">
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0IK-AW-Gg3">
                         <rect key="frame" x="18" y="45" width="89" height="17"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Access token:" id="Ptd-FI-M5A">
                             <font key="font" metaFont="system"/>
@@ -654,7 +676,7 @@ CA
                             <accessibilityConnection property="link" destination="7sb-sf-oJU" id="U0t-jC-oQ7"/>
                         </connections>
                     </textField>
-                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="7sb-sf-oJU">
+                    <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7sb-sf-oJU">
                         <rect key="frame" x="113" y="42" width="197" height="22"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="jlV-TC-NUv">
                             <font key="font" metaFont="system"/>
@@ -714,7 +736,7 @@ CA
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="830" y="430" width="400" height="300"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1280" height="777"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1680" height="1027"/>
             <view key="contentView" id="8ha-hw-zOD">
                 <rect key="frame" x="0.0" y="0.0" width="400" height="300"/>
                 <autoresizingMask key="autoresizingMask"/>

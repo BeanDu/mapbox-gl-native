@@ -2,23 +2,24 @@
 #include <mbgl/tile/geometry_tile_worker.hpp>
 #include <mbgl/tile/geometry_tile_data.hpp>
 #include <mbgl/tile/tile_observer.hpp>
-#include <mbgl/style/update_parameters.hpp>
 #include <mbgl/style/layer_impl.hpp>
 #include <mbgl/style/layers/background_layer.hpp>
 #include <mbgl/style/layers/custom_layer.hpp>
-#include <mbgl/renderer/render_background_layer.hpp>
-#include <mbgl/renderer/render_custom_layer.hpp>
-#include <mbgl/renderer/render_symbol_layer.hpp>
-#include <mbgl/style/style.hpp>
+#include <mbgl/renderer/tile_parameters.hpp>
+#include <mbgl/renderer/layers/render_background_layer.hpp>
+#include <mbgl/renderer/layers/render_custom_layer.hpp>
+#include <mbgl/renderer/layers/render_symbol_layer.hpp>
+#include <mbgl/renderer/buckets/symbol_bucket.hpp>
+#include <mbgl/renderer/query.hpp>
+#include <mbgl/text/glyph_atlas.hpp>
+#include <mbgl/renderer/image_atlas.hpp>
 #include <mbgl/storage/file_source.hpp>
 #include <mbgl/geometry/feature_index.hpp>
 #include <mbgl/text/collision_tile.hpp>
 #include <mbgl/map/transform_state.hpp>
-#include <mbgl/map/query.hpp>
-#include <mbgl/util/run_loop.hpp>
 #include <mbgl/style/filter_evaluator.hpp>
-#include <mbgl/style/query.hpp>
 #include <mbgl/util/logging.hpp>
+#include <mbgl/actor/scheduler.hpp>
 
 #include <iostream>
 
@@ -26,36 +27,56 @@ namespace mbgl {
 
 using namespace style;
 
+/*
+   Correlation between GeometryTile and GeometryTileWorker is safeguarded by two
+   correlation schemes:
+
+   GeometryTile's 'correlationID' is used for ensuring the tile will be flagged
+   as non-pending only when the placement coming from the last operation (as in
+   'setData', 'setLayers',  'setPlacementConfig') occurs. This is important for
+   still mode rendering as we want to render only when all layout and placement
+   operations are completed.
+
+   GeometryTileWorker's 'imageCorrelationID' is used for checking whether an
+   image request reply coming from `GeometryTile` is valid. Previous image
+   request replies are ignored as they result in incomplete placement attempts
+   that could flag the tile as non-pending too early.
+ */
+
 GeometryTile::GeometryTile(const OverscaledTileID& id_,
                            std::string sourceID_,
-                           const style::UpdateParameters& parameters)
+                           const TileParameters& parameters)
     : Tile(id_),
       sourceID(std::move(sourceID_)),
-      style(parameters.style),
-      mailbox(std::make_shared<Mailbox>(*util::RunLoop::Get())),
+      mailbox(std::make_shared<Mailbox>(*Scheduler::GetCurrent())),
       worker(parameters.workerScheduler,
              ActorRef<GeometryTile>(*this, mailbox),
              id_,
              obsolete,
-             parameters.mode),
-             glyphAtlas(*parameters.style.glyphAtlas) {
+             parameters.mode,
+             parameters.pixelRatio),
+      glyphManager(parameters.glyphManager),
+      imageManager(parameters.imageManager),
+      lastYStretch(1.0f),
+      mode(parameters.mode) {
 }
 
 GeometryTile::~GeometryTile() {
-    glyphAtlas.removeGlyphs(*this);
-    for (auto spriteAtlas : pendingSpriteAtlases) {
-        spriteAtlas->removeRequestor(*this);
-    }
-    cancel();
+    glyphManager.removeRequestor(*this);
+    imageManager.removeRequestor(*this);
+    markObsolete();
 }
 
 void GeometryTile::cancel() {
+    markObsolete();
+}
+
+void GeometryTile::markObsolete() {
     obsolete = true;
 }
 
 void GeometryTile::setError(std::exception_ptr err) {
     loaded = true;
-    renderable = false;
     observer->onTileError(*this, err);
 }
 
@@ -66,7 +87,6 @@ void GeometryTile::setData(std::unique_ptr<const GeometryTileData> data_) {
 
     ++correlationID;
     worker.invoke(&GeometryTileWorker::setData, std::move(data_), correlationID);
-    redoLayout();
 }
 
 void GeometryTile::setPlacementConfig(const PlacementConfig& desiredConfig) {
@@ -80,37 +100,44 @@ void GeometryTile::setPlacementConfig(const PlacementConfig& desiredConfig) {
 
     ++correlationID;
     requestedConfig = desiredConfig;
-    worker.invoke(&GeometryTileWorker::setPlacementConfig, desiredConfig, correlationID);
+    invokePlacement();
 }
 
-void GeometryTile::redoLayout() {
+void GeometryTile::invokePlacement() {
+    if (requestedConfig) {
+        worker.invoke(&GeometryTileWorker::setPlacementConfig, *requestedConfig, correlationID);
+    }
+}
+
+void GeometryTile::setLayers(const std::vector<Immutable<Layer::Impl>>& layers) {
     // Mark the tile as pending again if it was complete before to prevent signaling a complete
     // state despite pending parse operations.
     pending = true;
 
-    std::vector<std::unique_ptr<Layer>> copy;
+    std::vector<Immutable<Layer::Impl>> impls;
 
-    for (const Layer* layer : style.getLayers()) {
-        // Avoid cloning and including irrelevant layers.
-        if (layer->is<BackgroundLayer>() ||
-            layer->is<CustomLayer>() ||
-            layer->baseImpl->source != sourceID ||
-            id.overscaledZ < std::floor(layer->baseImpl->minZoom) ||
-            id.overscaledZ >= std::ceil(layer->baseImpl->maxZoom) ||
-            layer->baseImpl->visibility == VisibilityType::None) {
+    for (const auto& layer : layers) {
+        // Skip irrelevant layers.
+        if (layer->type == LayerType::Background ||
+            layer->type == LayerType::Custom ||
+            layer->source != sourceID ||
+            id.overscaledZ < std::floor(layer->minZoom) ||
+            id.overscaledZ >= std::ceil(layer->maxZoom) ||
+            layer->visibility == VisibilityType::None) {
             continue;
         }
 
-        copy.push_back(layer->baseImpl->clone());
+        impls.push_back(layer);
     }
 
     ++correlationID;
-    worker.invoke(&GeometryTileWorker::setLayers, std::move(copy), correlationID);
+    worker.invoke(&GeometryTileWorker::setLayers, std::move(impls), correlationID);
 }
 
-void GeometryTile::onLayout(LayoutResult result) {
+void GeometryTile::onLayout(LayoutResult result, const uint64_t resultCorrelationID) {
     loaded = true;
     renderable = true;
+    (void)resultCorrelationID;
     nonSymbolBuckets = std::move(result.nonSymbolBuckets);
     featureIndex = std::move(result.featureIndex);
     data = std::move(result.tileData);
@@ -118,52 +145,79 @@ void GeometryTile::onLayout(LayoutResult result) {
     observer->onTileChanged(*this);
 }
 
-void GeometryTile::onPlacement(PlacementResult result) {
+void GeometryTile::onPlacement(PlacementResult result, const uint64_t resultCorrelationID) {
     loaded = true;
     renderable = true;
-    if (result.correlationID == correlationID) {
+    if (resultCorrelationID == correlationID) {
         pending = false;
     }
     symbolBuckets = std::move(result.symbolBuckets);
     collisionTile = std::move(result.collisionTile);
+    if (result.glyphAtlasImage) {
+        glyphAtlasImage = std::move(*result.glyphAtlasImage);
+    }
+    if (result.iconAtlasImage) {
+        iconAtlasImage = std::move(*result.iconAtlasImage);
+    }
+    if (collisionTile.get()) {
+        lastYStretch = collisionTile->yStretch;
+    }
     observer->onTileChanged(*this);
 }
 
-void GeometryTile::onError(std::exception_ptr err) {
+void GeometryTile::onError(std::exception_ptr err, const uint64_t resultCorrelationID) {
     loaded = true;
-    pending = false;
-    renderable = false;
+    if (resultCorrelationID == correlationID) {
+        pending = false;
+    }
     observer->onTileError(*this, err);
 }
     
-void GeometryTile::onGlyphsAvailable(GlyphPositionMap glyphPositions) {
-    worker.invoke(&GeometryTileWorker::onGlyphsAvailable, std::move(glyphPositions));
+void GeometryTile::onGlyphsAvailable(GlyphMap glyphs) {
+    worker.invoke(&GeometryTileWorker::onGlyphsAvailable, std::move(glyphs));
 }
 
 void GeometryTile::getGlyphs(GlyphDependencies glyphDependencies) {
-    glyphAtlas.getGlyphs(*this, std::move(glyphDependencies));
+    glyphManager.getGlyphs(*this, std::move(glyphDependencies));
 }
 
-void GeometryTile::onIconsAvailable(SpriteAtlas* spriteAtlas, IconMap icons) {
-    iconAtlasMap[(uintptr_t)spriteAtlas] = icons;
-    pendingSpriteAtlases.erase(spriteAtlas);
-    if (pendingSpriteAtlases.empty()) {
-        worker.invoke(&GeometryTileWorker::onIconsAvailable, std::move(iconAtlasMap));
+void GeometryTile::onImagesAvailable(ImageMap images, uint64_t imageCorrelationID) {
+    worker.invoke(&GeometryTileWorker::onImagesAvailable, std::move(images), imageCorrelationID);
+}
+
+void GeometryTile::getImages(ImageRequestPair pair) {
+    imageManager.getImages(*this, std::move(pair));
+}
+
+void GeometryTile::upload(gl::Context& context) {
+    auto uploadFn = [&] (Bucket& bucket) {
+        if (bucket.needsUpload()) {
+            bucket.upload(context);
+        }
+    };
+
+    for (auto& entry : nonSymbolBuckets) {
+        uploadFn(*entry.second);
+    }
+
+    for (auto& entry : symbolBuckets) {
+        uploadFn(*entry.second);
+    }
+
+    if (glyphAtlasImage) {
+        glyphAtlasTexture = context.createTexture(*glyphAtlasImage, 0);
+        glyphAtlasImage = {};
+    }
+
+    if (iconAtlasImage) {
+        iconAtlasTexture = context.createTexture(*iconAtlasImage, 0);
+        iconAtlasImage = {};
     }
 }
 
-// TODO: If there's any value to be gained by it, we can narrow our request to just the sprites
-//  we need, but SpriteAtlases are just "loaded" or "not loaded"
-void GeometryTile::getIcons(IconDependencyMap iconDependencyMap) {
-    for (auto dependency : iconDependencyMap) {
-        pendingSpriteAtlases.insert(dependency.first);
-        dependency.first->getIcons(*this);
-    }
-}
-
-Bucket* GeometryTile::getBucket(const RenderLayer& layer) const {
-    const auto& buckets = layer.is<RenderSymbolLayer>() ? symbolBuckets : nonSymbolBuckets;
-    const auto it = buckets.find(layer.baseImpl.id);
+Bucket* GeometryTile::getBucket(const Layer::Impl& layer) const {
+    const auto& buckets = layer.type == LayerType::Symbol ? symbolBuckets : nonSymbolBuckets;
+    const auto it = buckets.find(layer.id);
     if (it == buckets.end()) {
         return nullptr;
     }
@@ -176,9 +230,19 @@ void GeometryTile::queryRenderedFeatures(
     std::unordered_map<std::string, std::vector<Feature>>& result,
     const GeometryCoordinates& queryGeometry,
     const TransformState& transformState,
+    const std::vector<const RenderLayer*>& layers,
     const RenderedQueryOptions& options) {
 
     if (!featureIndex || !data) return;
+
+    // Determine the additional radius needed factoring in property functions
+    float additionalRadius = 0;
+    for (const RenderLayer* layer : layers) {
+        auto bucket = getBucket(*layer->baseImpl);
+        if (bucket) {
+            additionalRadius = std::max(additionalRadius, bucket->getQueryRadius(*layer));
+        }
+    }
 
     featureIndex->query(result,
                         queryGeometry,
@@ -188,14 +252,14 @@ void GeometryTile::queryRenderedFeatures(
                         options,
                         *data,
                         id.canonical,
-                        style,
+                        layers,
                         collisionTile.get(),
-                        *this);
+                        additionalRadius);
 }
 
 void GeometryTile::querySourceFeatures(
     std::vector<Feature>& result,
-    const style::SourceQueryOptions& options) {
+    const SourceQueryOptions& options) {
 
     // Data not yet available
     if (!data) {
@@ -227,6 +291,13 @@ void GeometryTile::querySourceFeatures(
             }
         }
     }
+}
+
+float GeometryTile::yStretch() const {
+    // collisionTile gets reset in onLayout but we don't clear the symbolBuckets
+    // until a new placement result comes along, so keep the yStretch value in
+    // case we need to render them.
+    return lastYStretch;
 }
 
 } // namespace mbgl

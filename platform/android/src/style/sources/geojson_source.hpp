@@ -21,7 +21,7 @@ public:
 
     GeoJSONSource(jni::JNIEnv&, jni::String, jni::Object<>);
 
-    GeoJSONSource(mbgl::Map&, mbgl::style::GeoJSONSource&);
+    GeoJSONSource(mbgl::style::GeoJSONSource&);
 
     ~GeoJSONSource();
 
@@ -37,6 +37,8 @@ public:
 
     jni::Array<jni::Object<geojson::Feature>> querySourceFeatures(jni::JNIEnv&,
                                                                   jni::Array<jni::Object<>> jfilter);
+
+    jni::String getURL(jni::JNIEnv&);
 
     jni::jobject* createJavaPeer(jni::JNIEnv&);
 

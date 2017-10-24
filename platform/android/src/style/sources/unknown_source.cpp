@@ -4,7 +4,7 @@ namespace {
 
     // Dummy initializer (We don't support initializing this from the JVM)
     std::unique_ptr<mbgl::android::UnknownSource> init(jni::JNIEnv&) {
-        throw new std::runtime_error("UnknownSource should not be initialized from the JVM");
+        throw std::runtime_error("UnknownSource should not be initialized from the JVM");
     }
 
 } // namespace
@@ -12,8 +12,8 @@ namespace {
 namespace mbgl {
 namespace android {
 
-    UnknownSource::UnknownSource(mbgl::Map& map, mbgl::style::Source& coreSource)
-        : Source(map, coreSource) {
+    UnknownSource::UnknownSource(mbgl::style::Source& coreSource)
+            : Source(coreSource) {
     }
 
     jni::Class<UnknownSource> UnknownSource::javaClass;
